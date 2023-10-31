@@ -4,8 +4,7 @@ import numpy as np
 def heat_map(samples: np.ndarray, grid_size=20) -> np.ndarray:
     """
     samples: array of (x, y) data, in format of np.ndarray([[x,y],..,[x,y]])
-    grid_lt: coordination of left-top corner of each grid 
-    grid_rb: coordination of right-bottom corner of each grid 
+    grid_size: int, number of grids in the shorter edge
     return: 
         count_mat: 2-dim ndarray in the following order 
             y
@@ -14,29 +13,39 @@ def heat_map(samples: np.ndarray, grid_size=20) -> np.ndarray:
             |
             o--------> x   
     """
-    grid_lt = np.zeros((grid_size, grid_size, 2), dtype=np.uint16)
-    x = np.arange(0, grid_size).reshape((1, -1))
-    grid_lt[:,:,0] = x
-    grid_lt[:,:,1] = x.T
+
+    ymin = samples[:, 1].min()
+    ymax = samples[:, 1].max()
+    xmin = samples[:, 0].min()
+    xmax = samples[:, 0].max()
+    
+    dy = ymax - ymin
+    dx = xmax - xmin
+    
+    if dy > dx:
+        grid_size = [round(dy/dx*grid_size), grid_size]
+    else:
+        grid_size = [grid_size, round(dx/dy*grid_size)]
+    
+    
+    grid_lt = np.zeros(grid_size + [2], dtype=np.uint16)
+    grid_lt[:,:,1] = np.arange(0, grid_size[0]).reshape((-1, 1)) # y 
+    grid_lt[:,:,0] = np.arange(0, grid_size[1]).reshape((1, -1)) # x
     grid_rb = grid_lt.copy() + 1  # right shift and down shift by 1
-    norm_samples = samples.copy()
+    mapped_samples = samples.copy()
     
     # normalize the samples' coordinations and map them to [0, grid_size]
-    norm_samples[:,0] = (
-            samples[:,0] - samples[:,0].min()
-        ) / (
-            samples[:,0].max() - samples[:,0].min()
-        ) * grid_size
-    norm_samples[:,1] = (
-            samples[:,1] - samples[:,1].min()
-        ) / (
-            samples[:,1].max() - samples[:,1].min()
-        ) * grid_size
+    mapped_samples[:,0] = (
+            samples[:,0] - xmin
+        ) / dx * grid_size[1]
+    mapped_samples[:,1] = (
+            samples[:,1] - ymin
+        ) / dy * grid_size[0]
 
     # create a matrix for each sample, and combine them into an array
-    sample_mat = np.zeros([samples.shape[0], grid_size, grid_size, 2])
+    sample_mat = np.zeros([samples.shape[0], grid_size[0], grid_size[1], 2])
     for i in range(samples.shape[0]):
-        sample_mat[i,:,:] = norm_samples[i]
+        sample_mat[i,:,:] = mapped_samples[i]
     # (x, y) > (x0, y0) --> (x, y) is in the right-hand side of (x0, y0)
     count_mat = (sample_mat > grid_lt) * (sample_mat <= grid_rb) # matrix of Bool type
     count_mat = count_mat[:,:,:,0] * count_mat[:,:,:,1]  # find those with both x and y True

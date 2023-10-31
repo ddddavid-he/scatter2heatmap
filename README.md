@@ -10,7 +10,8 @@ Demo:
 
 | Scatter | HeatMap |
 | :----: | :----: |
-|<img src="https://github.com/ddddavid-he/scatter2heatmap/blob/main/demo/scatter.png" alt="Scatter" tittle="Scatter" width="90%"> | <img src="https://github.com/ddddavid-he/scatter2heatmap/blob/main/demo/heatmap.png" alt="Heatmap" title="Heatmap" width="90%">|
+|<img src="https://github.com/ddddavid-he/scatter2heatmap/blob/main/demo/ra-scatter.png" width="90%"> | <img src="https://github.com/ddddavid-he/scatter2heatmap/blob/main/demo/ra-heatmap.png" width="90%">|
+|<img src="https://github.com/ddddavid-he/scatter2heatmap/blob/main/demo/sin-scatter.png" width="90%"> | <img src="https://github.com/ddddavid-he/scatter2heatmap/blob/main/demo/sin-heatmap.png" width="90%">|
 
 
 

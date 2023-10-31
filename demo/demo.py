@@ -23,7 +23,7 @@ plt.savefig("./ra-heatmap.png", bbox_inches="tight")
 
 # sin(x^2+y^2)
 height, width = 50, 75
-apprx_dots_per_grid = 50
+apprx_dots_per_grid = 100
 origin = np.zeros((2, height, width))
 samples = np.array([[0, 0]])
 xy = np.zeros((2, height, width))
@@ -37,10 +37,7 @@ function_value = np.power(
 
 origin = xy
 for i in range(apprx_dots_per_grid):
-    shift = np.power(
-        2*np.random.random(size=[2, height, width]) - 1
-        , 3
-    ) * 1
+    shift = (2*np.random.random(size=[2, height, width]) - 1)*2 
     shifted = origin.copy()
     shifted[0] += shift[0] * (function_value>0)
     shifted[1] += shift[1] * (function_value>0)

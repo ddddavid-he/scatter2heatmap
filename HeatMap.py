@@ -1,4 +1,5 @@
 import numpy as np
+import psutil
 
 
 def heat_map(samples: np.ndarray, grid_size=20) -> np.ndarray:
@@ -32,28 +33,43 @@ def heat_map(samples: np.ndarray, grid_size=20) -> np.ndarray:
     grid_lt[:,:,1] = np.arange(0, grid_size[0]).reshape((-1, 1)) # y 
     grid_lt[:,:,0] = np.arange(0, grid_size[1]).reshape((1, -1)) # x
     grid_rb = grid_lt.copy() + 1  # right shift and down shift by 1
-    mapped_samples = samples.copy()
+    mapped_samples = np.array(samples.copy(), dtype=np.float128)
     
     # normalize the samples' coordinations and map them to [0, grid_size]
     mapped_samples[:,0] = (
-            samples[:,0] - xmin
+            mapped_samples[:,0] - xmin
         ) / dx * grid_size[1]
     mapped_samples[:,1] = (
-            samples[:,1] - ymin
+            mapped_samples[:,1] - ymin
         ) / dy * grid_size[0]
+    
+    
+    max_mem_size = 0.9 * psutil.virtual_memory().available # Bytes
+    frame_size = grid_size[0] * grid_size[1] * mapped_samples.itemsize * 2 # Bytes
+    if frame_size > max_mem_size:
+        raise MemoryError(f"grid_size={tuple(grid_size)} is too large, cannot allocate memory for a single frame.")
 
-    # create a matrix for each sample, and combine them into an array
-    sample_mat = np.zeros([samples.shape[0], grid_size[0], grid_size[1], 2])
-    for i in range(samples.shape[0]):
-        sample_mat[i,:,:] = mapped_samples[i]
-    # (x, y) > (x0, y0) --> (x, y) is in the right-hand side of (x0, y0)
-    count_mat = (sample_mat > grid_lt) * (sample_mat <= grid_rb) # matrix of Bool type
-    count_mat = count_mat[:,:,:,0] * count_mat[:,:,:,1]  # find those with both x and y True
-    count_mat = count_mat.sum(axis=0) # count each grids
-    # make those grids with smaller y in lower rows
-    count_mat = count_mat[::-1]  
-    return count_mat
 
+    if frame_size * samples.shape[0] < max_mem_size:
+        sample_mat = np.zeros([samples.shape[0], grid_size[0], grid_size[1], 2], dtype=mapped_samples.dtype)
+        sample_mat[:,:,:] = mapped_samples.reshape([-1,1,1,2])
+        # (x, y) > (x0, y0) --> (x, y) is in the right-below side of (x0, y0)
+        count_mat = (sample_mat >= grid_lt) * (sample_mat < grid_rb) # matrix of Bool type
+        count_mat = count_mat[:,:,:,0] * count_mat[:,:,:,1]  # find those with both x and y True
+        count_mat = count_mat.sum(axis=0) # count each grids
+    else:
+        print(f"W: Sample size too large, performance will decrease")
+        count_mat = np.zeros(grid_size)
+        sample_mat = np.zeros([grid_size[0], grid_size[1], 2], dtype=mapped_samples.dtype)
+        for sample in mapped_samples:
+            sample_mat[:, :] = sample
+            bool_mat = (sample_mat >= grid_lt) * (sample_mat < grid_rb)
+            bool_mat = bool_mat[:,:,0] * bool_mat[:,:,1]
+            count_mat += bool_mat
+        
+        
+    # have those grids with smaller y in lower rows
+    return count_mat[::-1]  
 
 
 

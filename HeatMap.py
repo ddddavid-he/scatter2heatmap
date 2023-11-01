@@ -29,7 +29,7 @@ def heat_map(samples: np.ndarray, grid_size=20) -> np.ndarray:
         grid_size = [grid_size, round(dx/dy*grid_size)]
     
     
-    grid_lt = np.zeros(grid_size + [2], dtype=np.uint16)
+    grid_lt = np.empty(grid_size + [2], dtype=np.uint)
     grid_lt[:,:,1] = np.arange(0, grid_size[0]).reshape((-1, 1)) # y 
     grid_lt[:,:,0] = np.arange(0, grid_size[1]).reshape((1, -1)) # x
     grid_rb = grid_lt.copy() + 1  # right shift and down shift by 1
@@ -51,7 +51,7 @@ def heat_map(samples: np.ndarray, grid_size=20) -> np.ndarray:
 
 
     if frame_size * samples.shape[0] < max_mem_size:
-        sample_mat = np.zeros([samples.shape[0], grid_size[0], grid_size[1], 2], dtype=mapped_samples.dtype)
+        sample_mat = np.empty([samples.shape[0], grid_size[0], grid_size[1], 2], dtype=mapped_samples.dtype)
         sample_mat[:,:,:] = mapped_samples.reshape([-1,1,1,2])
         # (x, y) > (x0, y0) --> (x, y) is in the right-below side of (x0, y0)
         count_mat = (sample_mat >= grid_lt) * (sample_mat < grid_rb) # matrix of Bool type
@@ -60,7 +60,7 @@ def heat_map(samples: np.ndarray, grid_size=20) -> np.ndarray:
     else:
         print(f"W: Sample size too large, performance will decrease")
         count_mat = np.zeros(grid_size)
-        sample_mat = np.zeros([grid_size[0], grid_size[1], 2], dtype=mapped_samples.dtype)
+        sample_mat = np.empty([grid_size[0], grid_size[1], 2], dtype=mapped_samples.dtype)
         for sample in mapped_samples:
             sample_mat[:, :] = sample
             bool_mat = (sample_mat >= grid_lt) * (sample_mat < grid_rb)
@@ -70,6 +70,8 @@ def heat_map(samples: np.ndarray, grid_size=20) -> np.ndarray:
         
     # have those grids with smaller y in lower rows
     return count_mat[::-1]  
+
+
 
 
 
